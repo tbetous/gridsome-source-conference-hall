@@ -1,0 +1,25 @@
+{
+  "name": "gridsome-source-conference-hall",
+  "version": "0.0.1",
+  "description": "A gridsome plugin to import conference-hall data",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tbetous/gridsome-source-conference-hall.git"
+  },
+  "keywords": [
+    "gridsome",
+    "plugin",
+    "source",
+    "conference-hall"
+  ],
+  "author": "tbetous",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tbetous/gridsome-source-conference-hall/issues"
+  },
+  "homepage": "https://github.com/tbetous/gridsome-source-conference-hall#readme",
+  "dependencies": {
+    "axios": "0.19.0"
+  }
+}
