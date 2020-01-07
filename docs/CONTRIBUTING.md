@@ -2,7 +2,7 @@
 
 Contributions, issues and feature requests are very welcome. If you are using this app and fixed a bug or improve it, please consider submitting a PR!
 
-You can contact me on Twitter [Thomas](https://twitter.com/tbetous))
+You can contact me on [Twitter](https://twitter.com/tbetous)
 
 If you want to contribute you must read and accept out [Code of Conduct](/code-of-conduct)
 
