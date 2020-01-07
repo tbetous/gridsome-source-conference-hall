@@ -21,7 +21,7 @@
 
 ## Author
 
-👤 **tbetous**
+👤 **Thomas Betous**
 
 - Twitter: [@tbetous](https://twitter.com/tbetous)
 - Github: [@tbetous](https://github.com/tbetous)
