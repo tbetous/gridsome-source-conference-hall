@@ -4,7 +4,7 @@ module.exports = (eventId, event) => {
     id: eventId,
     speakers: event.speakers.map(speaker => ({
       ...speaker,
-      id: event.speaker.uid
+      id: speaker.uid
     })),
     talks: event.talks.map((talk, index) => ({
       ...talk,
