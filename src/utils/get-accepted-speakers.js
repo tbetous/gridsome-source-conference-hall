@@ -1,13 +1,17 @@
+const { ACCEPTED_STATE } = require('./constants')
+
 module.exports = event => {
-  const acceptedTalks = event.talks.filter(talk => talk.state == "accepted");
+  const acceptedTalks = event.talks.filter(
+    talk => talk.state === ACCEPTED_STATE
+  )
   const acceptedTalkSpeakerIds = Array.from(
     new Set(
       acceptedTalks.reduce((aggregator, talk) => {
-        return aggregator.concat(talk.speakers);
+        return aggregator.concat(talk.speakers)
       }, [])
     )
-  );
+  )
   return event.speakers.filter(speaker =>
     acceptedTalkSpeakerIds.includes(speaker.uid)
-  );
-};
+  )
+}
