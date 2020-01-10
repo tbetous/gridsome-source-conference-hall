@@ -1,5 +1,5 @@
-const ACCEPTED_STATE = 'accepted'
+const CONFIRMED_STATE = 'confirmed'
 
 module.exports = {
-  ACCEPTED_STATE
+  CONFIRMED_STATE
 }

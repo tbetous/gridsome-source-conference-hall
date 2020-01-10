@@ -1,8 +1,8 @@
-const { ACCEPTED_STATE } = require('./constants')
+const { CONFIRMED_STATE } = require('./constants')
 
 module.exports = event => {
   const acceptedTalks = event.talks.filter(
-    talk => talk.state === ACCEPTED_STATE
+    talk => talk.state === CONFIRMED_STATE
   )
   const acceptedTalkSpeakerIds = Array.from(
     new Set(
