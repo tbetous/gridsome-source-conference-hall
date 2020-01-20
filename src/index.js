@@ -1,6 +1,5 @@
 const axios = require('axios').default
 
-const getFormattedEvent = require('./utils/get-formatted-event')
 const getConfirmedSpeakers = require('./utils/get-confirmed-speakers')
 const getConfirmedTalks = require('./utils/get-confirmed-talks')
 const getConfirmedCategories = require('./utils/get-confirmed-categories')
@@ -35,13 +34,53 @@ class ConferenceHallSource {
         params: { key: apiKey }
       })
 
-      const formattedEvent = getFormattedEvent(this.eventId, event)
-      this.addSpeakers(actions, formattedEvent)
-      this.addCategories(actions, formattedEvent)
-      this.addFormats(actions, formattedEvent)
-      this.addTalks(actions, formattedEvent)
-      this.addEvent(actions, formattedEvent)
+      this.addSpeakers(actions, event)
+      this.addCategories(actions, event)
+      this.addFormats(actions, event)
+      this.addTalks(actions, event)
+      this.addEvent(actions, event)
     })
+  }
+
+  // getFormattedEvent(event) {
+  //   return {
+  //     ...event,
+  //     id: this.eventId,
+  //     speakers: this.getNodeSpeakers(event.speakers),
+  //     talks: this.getNodeTalks(event.talks)
+  //   }
+  // }
+
+  getNodeEvent(event) {
+    return {
+      ...event,
+      speakers: event.speakers.map(speaker => speaker.id),
+      talks: event.talks.map(talk => talk.id),
+      categories: event.categories.map(category => category.id),
+      formats: event.formats.map(format => format.id)
+    }
+  }
+
+  getNodeSpeakers(speakers) {
+    return speakers.map(this.getNodeSpeaker)
+  }
+
+  getNodeSpeaker(speaker) {
+    return {
+      ...speaker,
+      id: speaker.uid
+    }
+  }
+
+  getNodeTalks(talks) {
+    return talks.map(this.getNodeTalk)
+  }
+
+  getNodeTalk(talk, id) {
+    return {
+      ...talk,
+      id
+    }
   }
 
   addSpeakers(actions, event) {
@@ -49,7 +88,7 @@ class ConferenceHallSource {
     const speakers = this.filterConfirmedTalks
       ? getConfirmedSpeakers(event)
       : event.speakers
-    speakers.forEach(speaker => {
+    this.getNodeSpeakers(speakers).forEach(speaker => {
       collection.addNode(speaker)
     })
   }
@@ -82,7 +121,7 @@ class ConferenceHallSource {
     const talks = this.filterConfirmedTalks
       ? getConfirmedTalks(event)
       : event.talks
-    talks.forEach(talk => {
+    this.getNodeTalks(talks).forEach(talk => {
       collection.addNode(talk)
     })
   }
