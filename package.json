@@ -1,6 +1,6 @@
 {
   "name": "gridsome-source-conference-hall",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A gridsome plugin to import conference-hall data",
   "main": "src/index.js",
   "scripts": {
