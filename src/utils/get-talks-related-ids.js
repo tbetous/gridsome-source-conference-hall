@@ -1,6 +1,6 @@
 /**
- * Get all speakers, formats and categories related to given talks
- * @param {*} talks An array of talks
+ * Get all speakers, formats and categories related to given talks.
+ * @param {*} talks
  */
 const getTalksRelatedIds = talks => {
   const aggregatedRelatedIds = talks.reduce(

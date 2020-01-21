@@ -1,9 +1,12 @@
 const axios = require('axios').default
 
-const getConfirmedSpeakers = require('./utils/get-confirmed-speakers')
-const getConfirmedTalks = require('./utils/get-confirmed-talks')
-const getConfirmedCategories = require('./utils/get-confirmed-categories')
-const getConfirmedFormats = require('./utils/get-confirmed-formats')
+const {
+  pipe,
+  cleanEvent,
+  filterEventTalksByStates,
+  extendEventSpeakers
+} = require('./utils')
+const { CONFIRMED_STATE } = require('./utils/constants')
 
 const BASE_URL = 'https://conference-hall.io/api/v1/event'
 
@@ -30,9 +33,15 @@ class ConferenceHallSource {
     }
 
     api.loadSource(async actions => {
-      const { data: event } = await axios.get(`${BASE_URL}/${eventId}`, {
+      const { data } = await axios.get(`${BASE_URL}/${eventId}`, {
         params: { key: apiKey }
       })
+
+      const event = pipe(data).apply(
+        filterEventTalksByStates(this.getTargettedStates()),
+        extendEventSpeakers,
+        cleanEvent
+      )
 
       this.addSpeakers(actions, event)
       this.addCategories(actions, event)
@@ -42,19 +51,14 @@ class ConferenceHallSource {
     })
   }
 
-  // getFormattedEvent(event) {
-  //   return {
-  //     ...event,
-  //     id: this.eventId,
-  //     speakers: this.getNodeSpeakers(event.speakers),
-  //     talks: this.getNodeTalks(event.talks)
-  //   }
-  // }
+  getTargettedStates() {
+    return [].concat(this.filterConfirmedTalks ? CONFIRMED_STATE : [])
+  }
 
   getNodeEvent(event) {
     return {
       ...event,
-      speakers: event.speakers.map(speaker => speaker.id),
+      speakers: event.speakers.map(speaker => speaker.uid),
       talks: event.talks.map(talk => talk.id),
       categories: event.categories.map(category => category.id),
       formats: event.formats.map(format => format.id)
@@ -62,53 +66,31 @@ class ConferenceHallSource {
   }
 
   getNodeSpeakers(speakers) {
-    return speakers.map(this.getNodeSpeaker)
-  }
-
-  getNodeSpeaker(speaker) {
-    return {
+    return speakers.map(speaker => ({
       ...speaker,
       id: speaker.uid
-    }
-  }
-
-  getNodeTalks(talks) {
-    return talks.map(this.getNodeTalk)
-  }
-
-  getNodeTalk(talk, id) {
-    return {
-      ...talk,
-      id
-    }
+    }))
   }
 
   addSpeakers(actions, event) {
     const collection = actions.addCollection('Speaker')
-    const speakers = this.filterConfirmedTalks
-      ? getConfirmedSpeakers(event)
-      : event.speakers
-    this.getNodeSpeakers(speakers).forEach(speaker => {
+    collection.addReference('talks', '[Talk]')
+    collection.addReference('categories', '[Category]')
+    this.getNodeSpeakers(event.speakers).forEach(speaker => {
       collection.addNode(speaker)
     })
   }
 
   addCategories(actions, event) {
     const collection = actions.addCollection('Category')
-    const categories = this.filterConfirmedTalks
-      ? getConfirmedCategories(event)
-      : event.categories
-    categories.forEach(category => {
+    event.categories.forEach(category => {
       collection.addNode(category)
     })
   }
 
   addFormats(actions, event) {
     const collection = actions.addCollection('Format')
-    const formats = this.filterConfirmedTalks
-      ? getConfirmedFormats(event)
-      : event.formats
-    formats.forEach(format => {
+    event.formats.forEach(format => {
       collection.addNode(format)
     })
   }
@@ -118,10 +100,7 @@ class ConferenceHallSource {
     collection.addReference('speakers', '[Speaker]')
     collection.addReference('categories', 'Category')
     collection.addReference('formats', 'Format')
-    const talks = this.filterConfirmedTalks
-      ? getConfirmedTalks(event)
-      : event.talks
-    this.getNodeTalks(talks).forEach(talk => {
+    event.talks.forEach(talk => {
       collection.addNode(talk)
     })
   }
@@ -132,7 +111,7 @@ class ConferenceHallSource {
     collection.addReference('talks', '[Talk]')
     collection.addReference('categories', '[Category]')
     collection.addReference('formats', '[Format]')
-    collection.addNode(event)
+    collection.addNode(this.getNodeEvent(event))
   }
 }
 

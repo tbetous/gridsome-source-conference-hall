@@ -28,31 +28,37 @@ describe('getTalksRelatedIds', () => {
   it('should return all related formats ids once', () => {
     const talks = [
       {
-        formats: ['4', '3']
+        formats: '4'
       },
       {
-        formats: ['2']
+        formats: '2'
       },
       {
-        formats: ['4', '1']
+        formats: '1'
+      },
+      {
+        formats: '4'
       }
     ]
 
-    expect(getTalksRelatedIds(talks).formats).toEqual(['4', '3', '2', '1'])
+    expect(getTalksRelatedIds(talks).formats).toEqual(['4', '2', '1'])
   })
   it('should return all related categories ids once', () => {
     const talks = [
       {
-        categories: ['4', '3']
+        categories: '4'
       },
       {
-        categories: ['2']
+        categories: '2'
       },
       {
-        categories: ['4', '1']
+        categories: '1'
+      },
+      {
+        categories: '4'
       }
     ]
 
-    expect(getTalksRelatedIds(talks).categories).toEqual(['4', '3', '2', '1'])
+    expect(getTalksRelatedIds(talks).categories).toEqual(['4', '2', '1'])
   })
 })
