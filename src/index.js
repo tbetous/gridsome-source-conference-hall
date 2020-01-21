@@ -1,10 +1,12 @@
 const axios = require('axios').default
 
-const getFormattedEvent = require('./utils/get-formatted-event')
-const getConfirmedSpeakers = require('./utils/get-confirmed-speakers')
-const getConfirmedTalks = require('./utils/get-confirmed-talks')
-const getConfirmedCategories = require('./utils/get-confirmed-categories')
-const getConfirmedFormats = require('./utils/get-confirmed-formats')
+const {
+  pipe,
+  cleanEvent,
+  filterEventTalksByStates,
+  extendEventSpeakers
+} = require('./utils')
+const { CONFIRMED_STATE } = require('./utils/constants')
 
 const BASE_URL = 'https://conference-hall.io/api/v1/event'
 
@@ -31,45 +33,64 @@ class ConferenceHallSource {
     }
 
     api.loadSource(async actions => {
-      const { data: event } = await axios.get(`${BASE_URL}/${eventId}`, {
+      const { data } = await axios.get(`${BASE_URL}/${eventId}`, {
         params: { key: apiKey }
       })
 
-      const formattedEvent = getFormattedEvent(this.eventId, event)
-      this.addSpeakers(actions, formattedEvent)
-      this.addCategories(actions, formattedEvent)
-      this.addFormats(actions, formattedEvent)
-      this.addTalks(actions, formattedEvent)
-      this.addEvent(actions, formattedEvent)
+      const event = pipe(data).apply(
+        filterEventTalksByStates(this.getTargettedStates()),
+        extendEventSpeakers,
+        cleanEvent
+      )
+
+      this.addSpeakers(actions, event)
+      this.addCategories(actions, event)
+      this.addFormats(actions, event)
+      this.addTalks(actions, event)
+      this.addEvent(actions, event)
     })
+  }
+
+  getTargettedStates() {
+    return [].concat(this.filterConfirmedTalks ? CONFIRMED_STATE : [])
+  }
+
+  getNodeEvent(event) {
+    return {
+      ...event,
+      speakers: event.speakers.map(speaker => speaker.uid),
+      talks: event.talks.map(talk => talk.id),
+      categories: event.categories.map(category => category.id),
+      formats: event.formats.map(format => format.id)
+    }
+  }
+
+  getNodeSpeakers(speakers) {
+    return speakers.map(speaker => ({
+      ...speaker,
+      id: speaker.uid
+    }))
   }
 
   addSpeakers(actions, event) {
     const collection = actions.addCollection('Speaker')
-    const speakers = this.filterConfirmedTalks
-      ? getConfirmedSpeakers(event)
-      : event.speakers
-    speakers.forEach(speaker => {
+    collection.addReference('talks', '[Talk]')
+    collection.addReference('categories', '[Category]')
+    this.getNodeSpeakers(event.speakers).forEach(speaker => {
       collection.addNode(speaker)
     })
   }
 
   addCategories(actions, event) {
     const collection = actions.addCollection('Category')
-    const categories = this.filterConfirmedTalks
-      ? getConfirmedCategories(event)
-      : event.categories
-    categories.forEach(category => {
+    event.categories.forEach(category => {
       collection.addNode(category)
     })
   }
 
   addFormats(actions, event) {
     const collection = actions.addCollection('Format')
-    const formats = this.filterConfirmedTalks
-      ? getConfirmedFormats(event)
-      : event.formats
-    formats.forEach(format => {
+    event.formats.forEach(format => {
       collection.addNode(format)
     })
   }
@@ -79,10 +100,7 @@ class ConferenceHallSource {
     collection.addReference('speakers', '[Speaker]')
     collection.addReference('categories', 'Category')
     collection.addReference('formats', 'Format')
-    const talks = this.filterConfirmedTalks
-      ? getConfirmedTalks(event)
-      : event.talks
-    talks.forEach(talk => {
+    event.talks.forEach(talk => {
       collection.addNode(talk)
     })
   }
@@ -93,7 +111,7 @@ class ConferenceHallSource {
     collection.addReference('talks', '[Talk]')
     collection.addReference('categories', '[Category]')
     collection.addReference('formats', '[Format]')
-    collection.addNode(event)
+    collection.addNode(this.getNodeEvent(event))
   }
 }
 
