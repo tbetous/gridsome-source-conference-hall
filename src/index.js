@@ -1,11 +1,12 @@
 const axios = require('axios').default
 
 const {
-  pipe,
   cleanEvent,
   filterEventTalksByStates,
-  extendEventSpeakers
+  extendEventSpeakers,
+  convertAbstractsToHtml: convertAbstracts
 } = require('./utils')
+
 const { CONFIRMED_STATE } = require('./utils/constants')
 
 const BASE_URL = 'https://conference-hall.io/api/v1/event'
@@ -15,14 +16,19 @@ class ConferenceHallSource {
     return {
       apiKey: null,
       eventId: null,
-      filterConfirmedTalks: false
+      filterConfirmedTalks: false,
+      convertAbstractsToHtml: false
     }
   }
 
-  constructor(api, { apiKey, eventId, filterConfirmedTalks }) {
+  constructor(
+    api,
+    { apiKey, eventId, filterConfirmedTalks, convertAbstractsToHtml }
+  ) {
     this.eventId = eventId
     this.apiKey = apiKey
     this.filterConfirmedTalks = filterConfirmedTalks
+    this.convertAbstractsToHtml = convertAbstractsToHtml
 
     if (!apiKey) {
       throw new Error(`Missing Conference-hall plugin apiKey option`)
@@ -37,11 +43,16 @@ class ConferenceHallSource {
         params: { key: apiKey }
       })
 
-      const event = pipe(data).apply(
-        filterEventTalksByStates(this.getTargettedStates()),
-        extendEventSpeakers,
-        cleanEvent
-      )
+      let transformedEvent = filterEventTalksByStates(
+        this.getTargettedStates()
+      )(data)
+
+      if (this.convertAbstractsToHtml) {
+        transformedEvent = convertAbstracts(transformedEvent)
+      }
+
+      transformedEvent = extendEventSpeakers(transformedEvent)
+      const event = cleanEvent(transformedEvent)
 
       this.addSpeakers(actions, event)
       this.addCategories(actions, event)
